@@ -9,6 +9,15 @@ import (
 	"github.com/yzpgryx/randomness"
 )
 
+const (
+	LogInfo = 6
+	LogDebug
+)
+
+type TestReporter interface {
+	LogReporter(level int, format string, args ...interface{})
+}
+
 func createDistributions(s, m int) [][]float64 {
 	res := make([][]float64, m)
 	for i := 0; i < m; i++ {
@@ -54,12 +63,15 @@ func FactoryDetect(source io.Reader) (bool, error) {
 
 // PowerOnDetect 上电自检，15种检测，每组 10^6比特，分20组
 // source: 随机源
-func PowerOnDetect(source io.Reader) (bool, error) {
+func PowerOnDetect(source io.Reader, reporter TestReporter) (bool, error) {
 	s := 20
 	t := Threshold(s)
 	buf := make([]byte, 1000000/8)
 	counters := make([]int, 15)
 	distributions := createDistributions(s, 15)
+
+	reporter.LogReporter(LogInfo, "随机数上电检测开始, %d组, 每组10^6bits\n", s);
+
 	for i := 0; i < s; i++ {
 		_, err := io.ReadFull(source, buf)
 		if err != nil {
@@ -71,15 +83,19 @@ func PowerOnDetect(source io.Reader) (bool, error) {
 			if result.Pass {
 				counters[idx]++
 			}
+			reporter.LogReporter(LogDebug, "第%02d组, [%s], p : %.4f, q : %.4f", i + 1, result.Name, result.P, result.Q)
 		}
 	}
 	for i, n := range counters {
+		reporter.LogReporter(LogInfo, "[%s], 样本 : %d, 通过 : %d, 通过阈值 : %d, 通过率 : %.2f\n",
+			randomness.TestMethodArr[i].Name, s, n, t, (float64(n) / float64(s)) * 100)
 		if n < t {
 			return false, fmt.Errorf("%s %d/%d", randomness.TestMethodArr[i].Name, n, s)
 		}
 	}
 	for i := range distributions {
 		Pt := ThresholdQ(distributions[i])
+		reporter.LogReporter(LogInfo,"[%s], Pt : %.2f\n", randomness.TestMethodArr[i].Name, Pt)
 		if Pt < randomness.AlphaT {
 			return false, fmt.Errorf("%s %f", randomness.TestMethodArr[i].Name, Pt)
 		}
@@ -90,12 +106,15 @@ func PowerOnDetect(source io.Reader) (bool, error) {
 // PeriodDetect 周期性检测，除去离散傅里叶检测、线型复杂度检测、通用统计的12种检测
 // 检测 20组，每组 20000比特
 // source: 随机源
-func PeriodDetect(source io.Reader) (bool, error) {
+func PeriodDetect(source io.Reader, reporter TestReporter) (bool, error) {
 	s := 20
 	t := Threshold(s)
 	buf := make([]byte, 20000/8)
 	counters := make([]int, 12)
 	distributions := createDistributions(s, 12)
+
+	reporter.LogReporter(LogInfo, "随机数周期性检测开始, %d组, 每组%dbits\n", s, 20000);
+
 	for i := 0; i < s; i++ {
 		_, err := io.ReadFull(source, buf)
 		if err != nil {
@@ -107,15 +126,20 @@ func PeriodDetect(source io.Reader) (bool, error) {
 			if result.Pass {
 				counters[idx]++
 			}
+			reporter.LogReporter(LogDebug, "第%02d组, [%s], p : %.4f, q : %.4f", i + 1, result.Name, result.P, result.Q)
 		}
 	}
 	for i, n := range counters {
+		reporter.LogReporter(LogInfo, "[%s], 样本 : %d, 通过 : %d, 通过阈值 : %d, 通过率 : %.2f\n",
+			randomness.TestMethodArr[i].Name, s, n, t, (float64(n) / float64(s)) * 100)
 		if n < t {
 			return false, fmt.Errorf("%s %d/%d", randomness.TestMethodArr[i].Name, n, s)
 		}
 	}
+
 	for i := range distributions {
 		Pt := ThresholdQ(distributions[i])
+		reporter.LogReporter(LogInfo,"[%s], Pt : %.2f\n", randomness.TestMethodArr[i].Name, Pt)
 		if Pt < randomness.AlphaT {
 			return false, fmt.Errorf("%s %f", randomness.TestMethodArr[i].Name, Pt)
 		}
@@ -126,8 +150,11 @@ func PeriodDetect(source io.Reader) (bool, error) {
 // SingleDetect 单次检测，单根据实际应用时每次才随机数的大小确定，检测采用扑克检测
 // source: 随机源
 // numByte: 采集字节数，不能小于16
-func SingleDetect(source io.Reader, numByte int) (bool, error) {
+func SingleDetect(source io.Reader, numByte int, reporter TestReporter) (bool, error) {
 	data := make([]byte, numByte)
+
+	reporter.LogReporter(LogInfo, "随机数单次检测开始,测试长度 : %d bits\n", numByte * 8)
+
 	_, err := io.ReadFull(source, data)
 	if err != nil {
 		return false, err
@@ -143,6 +170,7 @@ func SingleDetect(source io.Reader, numByte int) (bool, error) {
 		m = 8
 	}
 	p, _ := randomness.PokerTestBytes(data, m)
+	reporter.LogReporter(LogInfo, "单次检测结束,测试长度 : %d bits, p : %f\n", numByte * 8, p)
 	return p >= randomness.Alpha, nil
 }
 
