@@ -6,7 +6,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/Trisia/randomness"
+	"github.com/yzpgryx/randomness"
 )
 
 func createDistributions(s, m int) [][]float64 {

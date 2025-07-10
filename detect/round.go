@@ -1,6 +1,6 @@
 package detect
 
-import "github.com/Trisia/randomness"
+import "github.com/yzpgryx/randomness"
 
 // Round15 15种方法测试轮
 // data: 待检测数据，推荐长度： 10^6 bit =>  125,000 byte

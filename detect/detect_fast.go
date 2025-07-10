@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Trisia/randomness"
+	"github.com/yzpgryx/randomness"
 )
 
 // 工作器

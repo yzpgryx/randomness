@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Trisia/randomness"
+	"github.com/yzpgryx/randomness"
 	"io/ioutil"
 	"log"
 	"path"

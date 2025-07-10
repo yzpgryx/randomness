@@ -14,7 +14,7 @@ import (
 	"math"
 	"math/cmplx"
 
-	"github.com/Trisia/randomness/fft"
+	"github.com/yzpgryx/randomness/fft"
 )
 
 // DiscreteFourierTransform 离散傅里叶检测
