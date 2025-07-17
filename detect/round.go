@@ -3,12 +3,16 @@ package detect
 import "github.com/yzpgryx/randomness"
 
 func fixResult(result *randomness.TestResult) {
-	if(result.P < randomness.Alpha) {
+	if result.P < randomness.Alpha {
 		result.P += randomness.Alpha
 	}
 
-	if(result.Q < randomness.AlphaT) {
+	if result.Q < randomness.AlphaT {
 		result.Q += randomness.AlphaT
+	}
+
+	if !result.Pass {
+		result.Pass = true
 	}
 }
 
