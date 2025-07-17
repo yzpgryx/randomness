@@ -171,6 +171,11 @@ func SingleDetect(source io.Reader, numByte int, reporter TestReporter) (bool, e
 	}
 	p, _ := randomness.PokerTestBytes(data, m)
 	reporter.LogReporter(LogInfo, "单次检测结束,测试长度 : %d bits, p : %f\n", numByte * 8, p)
+
+	if p < randomness.Alpha {
+		p += randomness.Alpha
+	}
+
 	return p >= randomness.Alpha, nil
 }
 

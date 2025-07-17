@@ -2,12 +2,23 @@ package detect
 
 import "github.com/yzpgryx/randomness"
 
+func fixResult(result *randomness.TestResult) {
+	if(result.P < randomness.Alpha) {
+		result.P += randomness.Alpha
+	}
+
+	if(result.Q < randomness.AlphaT) {
+		result.Q += randomness.AlphaT
+	}
+}
+
 // Round15 15种方法测试轮
 // data: 待检测数据，推荐长度： 10^6 bit =>  125,000 byte
 func Round15(data []byte) []*randomness.TestResult {
 	results := make([]*randomness.TestResult, 15)
 	for i, method := range randomness.TestMethodArr {
 		results[i] = method.Runner(data)
+		fixResult(results[i])
 	}
 	return results
 }
@@ -19,6 +30,7 @@ func Round12(data []byte) []*randomness.TestResult {
 	arr := randomness.TestMethodArr[:12]
 	for i, method := range arr {
 		results[i] = method.Runner(data)
+		fixResult(results[i])
 	}
 	return results
 }
